@@ -1,10 +1,14 @@
-# CapacitorModel
+# CapacitorModel For Flash Energy Estimation:
 
-Capacitor Model for Flash Energy Estimation:
---------------------------------------------
+Requirements:
+-------------
+           -) Seaborn
+           -) Pandas
+           -) Matplotlib
 
-#Basic Information and Data Structure:
-#-------------------------------------
+
+Basic Information and Data Structure:
+-------------------------------------
 The contained code and data allow for all figures and capacitor energy estimation to be reproduced. The code provided are mainly for plotting routines, with the capacitor model also contained. The data provided are for the initiation locations of the flashes described in Section 2 of the manuscript, and contain data for columns:
 
                 -)Initiation Time - in seconds
@@ -25,14 +29,15 @@ The contained code and data allow for all figures and capacitor energy estimatio
 
 All data were extracting exactly from the simulation ouput files, with the exception of the flash area, plate separation, updraft volumes, and capacitor neutralization efficiencies, which were computed while data were parsed (described in Methods Section).
 
-#Running Analysis:
-#-------------------------------------
+Running Analysis:
+-------------------------------------
 Running the analysis is done by: python CapacitorModelAnalyses.py. Note, users will need to have Seaborn installed to run these scripts. If Seaborn is not installed, run either "conda install seaborn" or "pip install seaborn'. Seaborn is a statistical visualization package, and was used for the violin plots in Figure 4.
 
 There are three arguments that can be adjusted by the user, if additional analyses are wanted to be made.
-    1) Time series interval adjustment - adjusting bin_range will allow for various views of the data at different total and    average time scales. Currently, the default is 60. for 60 second intervals.
-    2) uniform_eta - Boolean arguement. If True, user must specify a value for eta by which capacitor energy estimates are adjusted by. Else, if False, the median values of eta_c are used.
-    3) eta_u - Uniform eta to be specified by the user if a different value is wished to be used to scale and adjust the capacitor energy estimates. 
+
+                -) Time series interval adjustment - adjusting bin_range will allow for various views of the data at different total and    average time scales. Currently, the default is 60. for 60 second intervals.
+                -) uniform_eta - Boolean arguement. If True, user must specify a value for eta by which capacitor energy estimates are adjusted by. Else, if False, the median values of eta_c are used.
+                -) eta_u - Uniform eta to be specified by the user if a different value is wished to be used to scale and adjust the capacitor energy estimates. 
     
     
     
