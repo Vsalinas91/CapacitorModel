@@ -87,7 +87,7 @@ def box_bins(areas,values):
     v5   = (values[b5])
     
     df   = pd.DataFrame([v0,v1,v2,v3,v4,v5]).T
-    df.columns = [r'$\leq$-1', '-0.5', '0', '0.5', '1',r'$\geq$ 1']
+    df.columns = [r'$\leq$ 0.10', '0.316', '1.0', '3.16', '10.0',r'$\geq$ 31.6']
     
     
     frac0  = v0.shape[0]/values.shape[0]
@@ -236,7 +236,14 @@ def energy_compare(t_centers,commas_totals,commas_means,cap_totals,cap_means,adj
         plt.savefig('Figures/ENERGY_COMPARE.png',bbox_inches='tight')
     else:
         plt.savefig('Figures/ENERGY_COMPARE_ETA.png',bbox_inches='tight')
-        
+
+def violin_alpha(ax,alpha):
+    '''
+    Set alpha for violin plots using the axis collection of violin objects.
+    Seaborn currently doesn't have a keyword arguement to handle this.
+    '''
+    for violin in ax.collections:
+        violin.set_alpha(alpha)        
         
 def box_plots(sl_bins,wk_bins): #FIX
     '''
@@ -259,8 +266,8 @@ def box_plots(sl_bins,wk_bins): #FIX
     #ETA:
     #-------------------------------------------------------------------
     #COMMAS
-    sns.violinplot(np.log10(sl_com_eta),ax=ax[0,1],color='tab:blue',width=.5,boxprops=dict(alpha=.7),showfliers = False);
-    sns.violinplot(np.log10(wk_com_eta),ax=ax[0,0],color='tab:blue',width=.5,boxprops=dict(alpha=.7),showfliers = False);
+    v1com = sns.violinplot(np.log10(sl_com_eta),ax=ax[0,1],color='tab:blue',width=.5,boxprops=dict(alpha=.6),showfliers = False);
+    v2com = sns.violinplot(np.log10(wk_com_eta),ax=ax[0,0],color='tab:blue',width=.5,boxprops=dict(alpha=.6),showfliers = False);
 
     #Empty plots; use for legends
     dcom, = ax[0,0].plot([0,0],[0,0],color='tab:red',linewidth=5)
@@ -268,8 +275,16 @@ def box_plots(sl_bins,wk_bins): #FIX
     ax[0,0].legend([dcom,dcap],['Capacitor','COMMAS'],loc='upper center',fontsize=14)
     
     #Capacitor:
-    sns.violinplot(np.log10(sl_cap_eta),ax=ax[0,1],color='red',width=.5,boxprops=dict(alpha=.7),showfliers = False);
-    sns.violinplot(np.log10(wk_cap_eta),ax=ax[0,0],color='red',width=.5,boxprops=dict(alpha=.7),showfliers = False);
+    v1cap = sns.violinplot(np.log10(sl_cap_eta),ax=ax[0,1],color='red',width=.5,boxprops=dict(alpha=.6),showfliers = False);
+    v2cap = sns.violinplot(np.log10(wk_cap_eta),ax=ax[0,0],color='red',width=.5,boxprops=dict(alpha=.6),showfliers = False);
+    
+    alpha = 0.6
+    #Set violin alpha:
+    violin_alpha(v1com,alpha)
+    violin_alpha(v2com,alpha)
+    violin_alpha(v1cap,alpha)
+    violin_alpha(v2cap,alpha)
+    
     #Annotate fraction of flashes per length bin
     for i,(n) in enumerate(percents_wk):
         ax[0,0].annotate('{0:.2f}%'.format(n*100),xy=(bin_range[i]-.35,-7.),weight='bold',color='k',fontsize=12.5);
@@ -282,19 +297,24 @@ def box_plots(sl_bins,wk_bins): #FIX
     #Energy:
     #-------------------------------------------------------------------
     #COMMAS
-    sns.violinplot(np.log10(sl_len_com),ax=ax[1,1],color='tab:blue',width=.5,boxprops=dict(alpha=.7),showfliers = False);
-    sns.violinplot(np.log10(wk_len_com),ax=ax[1,0],color='tab:blue',width=.5,boxprops=dict(alpha=.7),showfliers = False);
+    e1com = sns.violinplot(np.log10(sl_len_com),ax=ax[1,1],color='tab:blue',width=.5,boxprops=dict(alpha=.6),showfliers = False);
+    e2com = sns.violinplot(np.log10(wk_len_com),ax=ax[1,0],color='tab:blue',width=.5,boxprops=dict(alpha=.6),showfliers = False);
     #Capacitor:
-    sns.violinplot(np.log10(sl_len_cap),ax=ax[1,1],color='red',width=.5,boxprops=dict(alpha=.7),showfliers = False);
-    sns.violinplot(np.log10(wk_len_cap),ax=ax[1,0],color='red',width=.5,boxprops=dict(alpha=.7),showfliers = False);
+    e1cap = sns.violinplot(np.log10(sl_len_cap),ax=ax[1,1],color='red',width=.5,boxprops=dict(alpha=.6),showfliers = False);
+    e2cap = sns.violinplot(np.log10(wk_len_cap),ax=ax[1,0],color='red',width=.5,boxprops=dict(alpha=.6),showfliers = False);
 
+    #Set violin alpha for energy
+    violin_alpha(e1com,alpha)
+    violin_alpha(e2com,alpha)
+    violin_alpha(e1cap,alpha)
+    violin_alpha(e2cap,alpha)
 
     [ax[0,j].set_ylim(-8,8) for j in range(2)]
     [ax[1,j].set_ylim(0,13) for j in range(2)]
 
     [ax[0,j].set_ylabel(r'$\rm log_{10}(\eta)$',fontsize=15)          for j in range(2)]
     [ax[1,j].set_ylabel(r'$\rm log_{10}(W [J])$',fontsize=15)         for j in range(2)]
-    [ax[i,j].set_xlabel(r'$\rm log_{10}(\sqrt{A} [km])$',fontsize=15) for i in range(2) for j in range(2)]
+    [ax[i,j].set_xlabel(r'$\rm \sqrt{A} [km]$',fontsize=15)           for i in range(2) for j in range(2)]
     [ax[i,j].tick_params(labelsize=13) for i in range(2)              for j in range(2)]
     [ax[i,j].grid(alpha=0.3) for i in range(2)                        for j in range(2)]
 
