@@ -58,11 +58,12 @@ def get_flash_data(case):
         cap_energy      = modeled capacitor flash energy change
     '''
     read_flash   = pd.read_csv(f'InitData/{case}_INIT_DATA.csv')
-    read_flash   = read_flash.convert_objects(convert_numeric=True)
+    # read_flash   = read_flash.convert_objects(convert_numeric=True)
+    read_flash   = read_flash.apply(pd.to_numeric, errors="ignore")
     read_flash   = read_flash.dropna()
 
     model_energy = -read_flash[' Change in Energy'] #COMMAS Flash energy change (- sign as values are energy removed)
-    init_time    = read_flash['Time (s)']           #Time of initiation
+    init_time    = read_flash['Time (s)']         #Time of initiation
 
 
     #Compute Breakdown Field
@@ -76,7 +77,7 @@ def get_flash_data(case):
     #Compute flash capacitor energy:   #
     ####################################
     cap_energy  = cap.compute_energy(plate_separation,plate_area,flash_breakdown) #Joules (J)
-    
+
     minute_bins = np.array(np.arange(init_time.min(), init_time.max(),bin_range))
 
     return(read_flash,model_energy,init_time,init_altitude,
@@ -96,38 +97,38 @@ def data_tuples(wk,sl):
     cap_totals    = (wk_cap_totals   ,sl_cap_totals   )
     cap_means     = (wk_cap_means    ,sl_cap_means    )
     return(t_centers,commas_totals,commas_means,cap_totals,cap_means)
-    
+
 
 ####################################
 #Data Bins for histograms:         #
 ####################################
 
 if __name__ == '__main__':
-    
+
     wk_data = get_flash_data(case_wk)
     sl_data = get_flash_data(case_sl)
-    
+
     #get data subsets, and return individual dataframes
     (wk_df, wk_energy,wk_time,wk_init_alt,
             wk_separation,wk_ebrk,wk_area,wk_cap,wk_bins) = wk_data
 
     (sl_df, sl_energy,sl_time,sl_init_alt,
             sl_separation,sl_ebrk,sl_area,sl_cap,sl_bins) = sl_data
-    
-    
+
+
     #Get neutralization efficiences for COMMAS and capacitor flash energies, eta_m (Eq. 4) and eta_c (Eq. 2), respectively
     wk_commas_eta  = wk_df.eta_m
     sl_commas_eta  = sl_df.eta_m
-    
+
     wk_cap_eta     = wk_df.eta_c
     sl_cap_eta     = sl_df.eta_c
-    
+
     #Get median values for use in adjustment of energy estimates for the capacitor model
     wk_commas_etaM = np.nanmedian(wk_commas_eta)
     sl_commas_etaM = np.nanmedian(sl_commas_eta)
     print('Median COMMAS neutralization efficiencies: {0} and {1} for WK82 and SL16,respectively'.
           format(wk_commas_etaM,sl_commas_etaM))
-    
+
     if uniform_eta == False:
         wk_cap_etaM    = np.nanmedian(wk_cap_eta)
         sl_cap_etaM    = np.nanmedian(sl_cap_eta)
@@ -150,8 +151,8 @@ if __name__ == '__main__':
 
     (sl_tedges,sl_commas_totals,
      sl_commas_means,sl_cap_totals,sl_cap_means) = energy_time_series(sl_time,sl_df,sl_cap,sl_bins,sl_cap_etaM,False)
-    
-    
+
+
     wk = (wk_tedges,wk_commas_totals,wk_commas_means,wk_cap_totals,wk_cap_means)
     sl = (sl_tedges,sl_commas_totals,sl_commas_means,sl_cap_totals,sl_cap_means)
     t_centers,commas_totals,commas_means,cap_totals,cap_means = data_tuples(wk,sl)
@@ -159,7 +160,7 @@ if __name__ == '__main__':
     #PLOT ORIGINAL ETIMATES
     energy_compare(t_centers,commas_totals,commas_means,cap_totals,cap_means,False)
     print('Plotted Capacitor and COMMAS flash energy change pre neutralization efficiency adjustment')
-    
+
     ######################
     #ADJUSTMENT          #
     ########################################################################
@@ -170,8 +171,8 @@ if __name__ == '__main__':
 
     (sl_tedges,sl_commas_totals,
      sl_commas_means,sl_cap_totals,sl_cap_means) = energy_time_series(sl_time,sl_df,sl_cap,sl_bins,sl_cap_etaM,True)
-    
-    
+
+
     wk = (wk_tedges,wk_commas_totals,wk_commas_means,wk_cap_totals,wk_cap_means)
     sl = (sl_tedges,sl_commas_totals,sl_commas_means,sl_cap_totals,sl_cap_means)
     t_centers,commas_totals,commas_means,cap_totals,cap_means = data_tuples(wk,sl)
@@ -179,8 +180,8 @@ if __name__ == '__main__':
     #PLOT ORIGINAL ETIMATES
     energy_compare(t_centers,commas_totals,commas_means,cap_totals,cap_means,True)
     print('Plotted Capacitor and COMMAS flash energy change with neutralization efficiency adjustment')
-    
-    
+
+
     #######################
     #FLASH LENGTH ANALYSIS#
     ##########################################################################
@@ -188,35 +189,30 @@ if __name__ == '__main__':
     #---------------------------------
     sl_len_w,percents_sl_w       = box_bins(sl_df.area,sl_cap)
     wk_len_w,percents_wk_w       = box_bins(wk_df.area,wk_cap)
-       
+
     sl_len_wcom,percents_sl_wcom = box_bins(sl_df.area,sl_energy)
     wk_len_wcom,percents_wk_wcom = box_bins(wk_df.area,wk_energy)
-    
+
     sl_len_eta,percents_sl_eta   = box_bins(sl_df.area,sl_cap_eta)
     wk_len_eta,percents_wk_eta   = box_bins(wk_df.area,wk_cap_eta)
-       
+
     sl_len_etacom,percents_sl_etacom = box_bins(sl_df.area,sl_commas_eta)
     wk_len_etacom,percents_wk_etacom = box_bins(wk_df.area,wk_commas_eta)
-    
-         
+
+
     #tuple of binned data:
     wk_len_bins = (wk_len_w,wk_len_wcom,wk_len_eta,wk_len_etacom,percents_wk_w)
     sl_len_bins = (sl_len_w,sl_len_wcom,sl_len_eta,sl_len_etacom,percents_sl_w)
-    
+
     box_plots(sl_len_bins,wk_len_bins)
-    
+
     #######################
     #CASE PLOTS           #
     ###########################################################################
     print(wk_df.columns)
     wk_sim_time = wk_df.w_time
     sl_sim_time = sl_df.w_time
-    
+
 
     case_time_series(wk_df,case_wk,wk_bins,wk_sim_time)
     case_time_series(sl_df,case_sl,sl_bins,sl_sim_time)
-    
-
-
-
-
