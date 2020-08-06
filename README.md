@@ -1,4 +1,5 @@
 # CapacitorModel For Flash Energy Estimation:
+[![DOI](https://zenodo.org/badge/268525435.svg)](https://zenodo.org/badge/latestdoi/268525435)
 
 Requirements:
 -------------
