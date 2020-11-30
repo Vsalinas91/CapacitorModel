@@ -14,10 +14,10 @@ def make_patch_spines_invisible(ax):
     '''
     Spines on axes will be set to invisible on
     axes offset from parent figure.
-    
-    For use with figures with more than 2 shared 
+
+    For use with figures with more than 2 shared
     axes.
-    
+
     Adjusted from:
     https://matplotlib.org/3.1.1/gallery/ticks_and_spines/multiple_yaxis_with_spines.html
     '''
@@ -25,16 +25,16 @@ def make_patch_spines_invisible(ax):
     ax.patch.set_visible(False)
     for sp in ax.spines.values():
         sp.set_visible(False)
-        
+
 def case_time_series(df,case,bins,sim_time):
     t_edges, hist_mean_area = hist_min(df['Time (s)'],df.area                 ,bins,'means' )
     t_edges, hist_total_area= hist_min(df['Time (s)'],df.area                 ,bins,'totals')
     t_edges, hist_total_w   = hist_min(df['Time (s)'],-df[' Change in Energy'],bins,'totals')
     t_edges, hist_mean_w    = hist_min(df['Time (s)'],-df[' Change in Energy'],bins,'means' )
     t_edges, hist_total_rate= hist_min(df['Time (s)'],None                    ,bins,'totals') #Flash rate
-    
-    
-    
+
+
+
     fig, ax = plt.subplots(2,2,figsize=(15,10))
     ax_rate1 = ax[0,0].twinx()
     ax_rate2 = ax[0,1].twinx()
@@ -72,7 +72,7 @@ def case_time_series(df,case,bins,sim_time):
     axwindd.spines["right"].set_position(("axes", 1.2))
     make_patch_spines_invisible(axwindd)
     axwindd.spines["right"].set_visible(True)
-    
+
     sort_t = np.argsort(np.unique(sim_time))
 
     #Line plots:
@@ -168,13 +168,13 @@ def case_time_series(df,case,bins,sim_time):
 
 
 
-    
+
     if case == 'WK':
         axwind.set_ylim( .5e3,2550)
         axwindb.set_ylim(.5e3,2550)
         axwindc.set_ylim(.5e3,2550)
         axwindd.set_ylim(.5e3,2550)
-        
+
         for i,(a,l) in enumerate(zip(ax.flatten(),['A)','B)','C)','D)'])):
             if i == 0:
                 a.annotate(l,xy=(1500,81000),fontsize=26,color='red',weight='bold')
@@ -195,7 +195,21 @@ def case_time_series(df,case,bins,sim_time):
                 a.annotate(l,xy=(2000,44000),fontsize=26,color='red',weight='bold')
             elif i == 3:
                 a.annotate(l,xy=(8200,90),fontsize=26,color='red',weight='bold')
-                
+
     plt.tight_layout()
-    plt.savefig(f'Figures/{case}_SUMMARY.png',dpi=120,bbox_inches='tight')
+    plt.savefig(f'Figures/{case}_SUMMARY.pdf',dpi=120,bbox_inches='tight')
+    plt.close()
+
+def case_energy_area(df_area,df_energy,case):
+    import scipy.stats as stats
+
+    fig,ax=plt.subplots(1,1,figsize=(6,6))
+    rstat = stats.pearsonr(np.log10(df_area),np.log10(df_energy))
+    g = sns.regplot(np.log10(df_area),np.log10(df_energy),color='k',scatter=False,ax=ax)
+    sns.scatterplot(np.log10(df_area),np.log10(df_energy),color='C3',edgecolor='k',linewidth=.4,alpha=0.7)
+    g.annotate(r'pearsonr{0:.2f}; p={1:.2f}'.format(rstat[0],rstat[1]),(-.25,9.5),fontsize=13)
+    ax.tick_params(labelsize=14)
+    ax.set_xlabel(r'$\rm log_{10}$($\rm \sqrt{A}$ [km])',fontsize=15)
+    ax.set_ylabel(r'$\rm log_{10}$($\rm \Delta W_m \ [J]$)',fontsize=15)
+    plt.savefig(f'Figures/{case}_AREA-ENERGY.pdf',dpi=120,bbox_inches='tight')
     plt.close()

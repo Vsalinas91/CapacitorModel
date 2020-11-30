@@ -23,8 +23,8 @@ import numpy as np
 import pandas as pd
 import scipy.stats as st
 import Capacitor as cap
-from EnergyPlotting import hist_min,box_bins,energy_time_series,energy_compare,box_plots,eta_time_series
-from CasePlotting import case_time_series
+from EnergyPlotting import hist_min,box_bins,energy_time_series,energy_compare,box_plots,eta_time_series,cov_time_series
+from CasePlotting import case_time_series, case_energy_area
 
 import matplotlib
 matplotlib.use('agg')
@@ -45,7 +45,7 @@ eta_u       = 0.008 # uniform eta value (u = uniform) - median range between 0.0
 ######################################################
 #Read Data: And set some global variables to be used #
 ######################################################
-def get_flash_data(case):
+def get_flash_data(case,charge_type):
     '''
     Read data file with initiation data. Returns tuple of:
         read_flash   = case data frame
@@ -58,9 +58,13 @@ def get_flash_data(case):
         cap_energy      = modeled capacitor flash energy change
     '''
     read_flash   = pd.read_csv(f'InitData/{case}_INIT_DATA.csv')
+    cg_flashes   = pd.read_csv(f'InitData/{case}-CG-Flashes.csv')
+    ignore = cg_flashes.cg_flag.values
+
     # read_flash   = read_flash.convert_objects(convert_numeric=True)
     read_flash   = read_flash.apply(pd.to_numeric, errors="ignore")
     read_flash   = read_flash.dropna()
+    read_flash   = read_flash.drop(index=ignore) #Drop all flashes that correspond to -/+CG or IC flashes with a CG component
 
     model_energy = -read_flash[' Change in Energy'] #COMMAS Flash energy change (- sign as values are energy removed)
     init_time    = read_flash['Time (s)']         #Time of initiation
@@ -76,7 +80,7 @@ def get_flash_data(case):
     ####################################
     #Compute flash capacitor energy:   #
     ####################################
-    cap_energy  = cap.compute_energy(plate_separation,plate_area,flash_breakdown) #Joules (J)
+    cap_energy  = cap.compute_energy(plate_separation,plate_area,flash_breakdown,charge_type) #Joules (J)
 
     minute_bins = np.array(np.arange(init_time.min(), init_time.max(),bin_range))
 
@@ -105,8 +109,8 @@ def data_tuples(wk,sl):
 
 if __name__ == '__main__':
 
-    wk_data = get_flash_data(case_wk)
-    sl_data = get_flash_data(case_sl)
+    wk_data = get_flash_data(case_wk,'surface') #charge_type == 'surface' implies surface charge density calculation for W_c; else use space charge density.
+    sl_data = get_flash_data(case_sl,'surface') #charge_type == 'surface' implies surface charge density calculation for W_c; else use space charge density.
 
     #get data subsets, and return individual dataframes
     (wk_df, wk_energy,wk_time,wk_init_alt,
@@ -120,8 +124,10 @@ if __name__ == '__main__':
     wk_commas_eta  = wk_df.eta_m
     sl_commas_eta  = sl_df.eta_m
 
-    wk_cap_eta     = wk_df.eta_c
-    sl_cap_eta     = sl_df.eta_c
+    #Compute capacitor effiencies from energy -- eta_c in data file report previous
+    #eta computed using a different (old) capacitor model configuration.
+    wk_cap_eta     = wk_energy/wk_cap #wk_df.eta_c
+    sl_cap_eta     = sl_energy/sl_cap #sl_df.eta_c
 
     #Get median values for use in adjustment of energy estimates for the capacitor model
     wk_commas_etaM = np.nanmedian(wk_commas_eta)
@@ -158,7 +164,7 @@ if __name__ == '__main__':
     t_centers,commas_totals,commas_means,cap_totals,cap_means = data_tuples(wk,sl)
 
     #PLOT ORIGINAL ETIMATES
-    energy_compare(t_centers,commas_totals,commas_means,cap_totals,cap_means,False)
+    energy_compare(t_centers,commas_totals,commas_means,cap_totals,cap_means,(wk_cap_etaM,sl_cap_etaM),False)
     print('Plotted Capacitor and COMMAS flash energy change pre neutralization efficiency adjustment')
 
     ######################
@@ -178,7 +184,7 @@ if __name__ == '__main__':
     t_centers,commas_totals,commas_means,cap_totals,cap_means = data_tuples(wk,sl)
 
     #PLOT ORIGINAL ETIMATES
-    energy_compare(t_centers,commas_totals,commas_means,cap_totals,cap_means,True)
+    energy_compare(t_centers,commas_totals,commas_means,cap_totals,cap_means,(wk_cap_etaM,sl_cap_etaM),True)
     print('Plotted Capacitor and COMMAS flash energy change with neutralization efficiency adjustment')
 
 
@@ -207,12 +213,25 @@ if __name__ == '__main__':
     box_plots(sl_len_bins,wk_len_bins)
 
     #######################
+    #ETA TIME-SERIES      #
+    #######################
+    ###########################################################################
+    eta_time_series(wk_df,sl_df,wk_cap_etaM,sl_cap_etaM,wk_cap,sl_cap,wk_bins,sl_bins)
+
+    #######################
     #CASE PLOTS           #
     ###########################################################################
     print(wk_df.columns)
     wk_sim_time = wk_df.w_time
     sl_sim_time = sl_df.w_time
 
-
     case_time_series(wk_df,case_wk,wk_bins,wk_sim_time)
     case_time_series(sl_df,case_sl,sl_bins,sl_sim_time)
+
+    case_energy_area(wk_df.area,wk_energy,'WK82')
+    case_energy_area(sl_df.area,sl_energy,'SL16')
+
+    ######################
+    #Energy Covariance   #
+    ######################
+    cov_time_series(wk_cap,wk_energy,wk_time,wk_bins,wk_cap_etaM,sl_cap,sl_energy,sl_time,sl_bins,sl_cap_etaM)

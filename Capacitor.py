@@ -20,7 +20,7 @@ e     = (1.+X_air)*e_0 #electric permitivitty of cloudy air
 ##########################################
 # Capacitor:                             #
 ##########################################
-def capacitor_discharge(rho,d,a):
+def capacitor_discharge(rho,d,a,sig,charge_type):
     '''
     Returns the energy neutralized for a capacitor. (Eq. 1)
        -) rho = critical space charge density
@@ -28,7 +28,10 @@ def capacitor_discharge(rho,d,a):
        -) a   = plate area (flash plan view area)
        -) e   = permitivitty of cloudy air
     '''
-    num = rho**2. * d**3. * a
+    if charge_type == 'surface':
+        num = sig**2. * d * a
+    elif charge_type == 'space':
+        num = rho**2. * d**3. * a
     den = 2. * e
     return (num/den)
 
@@ -51,19 +54,29 @@ def e_br(z):
           returns: e_critical in kV/m
     '''
     rho_a = 1.208 * np.exp(-(z/8.4))
-    return 167.*rho_a
+    #For threshold field of 201 kV/m [Marshall et al. 1995]
+    #return 167.*rho_a 
+    
+    #For Threshold field of 281 kV/m [Marshall et al. 2005]
+    return 232.6*rho_a
 
 ###########################################
 #COMPUTE ALL FLASH ENERGIES:              #
 ###########################################
-def compute_energy(cap_dist,cap_area,flash_breakdown):
+def compute_energy(cap_dist,cap_area,flash_breakdown,charge_type):
     '''
     Compute flash energy for dataset.
     Critical space charge density is computed prior to energy calculation.
     (Eq. 6 and 7 in Text)
     '''
-    rho_crit     = (2*e*flash_breakdown)/cap_dist
-    flash_energy = capacitor_discharge(rho_crit,cap_dist,cap_area)
-    return(flash_energy)
+    sig_crit = (e*flash_breakdown) #between plates
+#     sig_crit = (2*e*flash_breakdown) # at d/2 between plates. 
+    rho_crit     = (sig_crit)/cap_dist
+    if charge_type == 'surface':
+        flash_energy = capacitor_discharge(rho_crit,cap_dist,cap_area,sig_crit,'surface')
+    else:
+        flash_energy = capacitor_discharge(rho_crit,cap_dist,cap_area,sig_crit,'space')
+    #Multiply by two to account for mirror charges
+    return(flash_energy * 4)
 
     

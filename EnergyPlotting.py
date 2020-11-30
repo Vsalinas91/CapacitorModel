@@ -98,6 +98,29 @@ def box_bins(areas,values):
     frac5  = v5.shape[0]/values.shape[0]
     return(df,[frac0,frac1,frac2,frac3,frac4,frac5])
 
+def temporal_binning(df_cap,df_comm,df_time,df_time_bins,df_etac):
+    df_minutes = []
+    df_com_minutes = []
+    for i in range(len(df_time_bins)):
+        if  df_time_bins[i] == df_time_bins[0]:
+            df_minutes.append(df_cap[df_time<=df_time_bins[0]]*(df_etac) * 1e-9)
+            df_com_minutes.append(df_comm[df_time<=df_time_bins[0]] * 1e-9)
+        elif df_time_bins[i] == df_time_bins[-1]:
+            df_minutes.append(df_cap[df_time>=df_time_bins[-1]]*(df_etac) * 1e-9)
+            df_com_minutes.append(df_comm[df_time>=df_time_bins[-1]] * 1e-9)
+        else:
+            df_minutes.append(df_cap[(df_time_bins[i] < df_time) & (df_time <= df_time_bins[i+1])]*(df_etac) * 1e-9)
+            df_com_minutes.append(df_comm[(df_time_bins[i] < df_time) & (df_time <= df_time_bins[i+1])] * 1e-9)
+
+    return(np.array(df_minutes),np.array(df_com_minutes))
+
+def temporal_covariance(df_cap,df_comm,df_time,df_time_bins,df_etac):
+    covariance = temporal_binning(df_cap,df_comm,df_time,df_time_bins,df_etac)
+    #Normalized if bias = 1, else bias = 0 by default
+    cov_xy     = [np.cov(covariance[0][i],covariance[1][i])[0][1] for i in range(covariance[0].shape[0])] #bias = 1 for * (covariance[0].shape[0]-1)
+    return(cov_xy)
+
+
 def energy_time_series(init_time,df,cap,minute_bins,eta,adjust):
     '''
     Get one minute (or specified time intervals) binned data fields. Used for
@@ -127,7 +150,7 @@ def energy_time_series(init_time,df,cap,minute_bins,eta,adjust):
     return(t_edges,commas_totals,commas_means,cap_totals,cap_means)
 
 
-def energy_compare(t_centers,commas_totals,commas_means,cap_totals,cap_means,adjust):
+def energy_compare(t_centers,commas_totals,commas_means,cap_totals,cap_means,eta,adjust):
     '''
     Plot the energy comparisons between COMMAS and Capacitor flash energy neutralizations.
     Arguments should be tuples in form:
@@ -199,6 +222,9 @@ def energy_compare(t_centers,commas_totals,commas_means,cap_totals,cap_means,adj
             axs.tick_params(axis='both', which='major', labelsize=12)
     else:
         ylabel = 'Capacitor Energy (GJ)'
+        ax[0,0].set_title(r'$\tilde{{\eta}}_c$ = {0:.3f}'.format(eta[0]),fontsize=17)
+        ax[0,1].set_title(r'$\tilde{{\eta}}_c$ = {0:.3f}'.format(eta[1]),fontsize=17)
+
 
     #Axis Labels:
     [ax[i,j].set_xlabel('Model Time (s)'       ,fontsize=15) for i in range(2) for j in range(2)]
@@ -233,9 +259,9 @@ def energy_compare(t_centers,commas_totals,commas_means,cap_totals,cap_means,adj
 
     plt.tight_layout()
     if adjust == False:
-        plt.savefig('Figures/ENERGY_COMPARE.png',bbox_inches='tight')
+        plt.savefig('Figures/ENERGY_COMPARE.pdf',bbox_inches='tight')
     else:
-        plt.savefig('Figures/ENERGY_COMPARE_ETA.png',bbox_inches='tight')
+        plt.savefig('Figures/ENERGY_COMPARE_ETA.pdf',bbox_inches='tight')
 
 def violin_alpha(ax,alpha):
     '''
@@ -262,21 +288,23 @@ def box_plots(sl_bins,wk_bins): #FIX
 
     fig,ax = plt.subplots(2,2,figsize=(12,11))
 
+    plot_type = sns.boxplot#sns.violineplot
+    fliers    = True
 
     #ETA:
     #-------------------------------------------------------------------
     #COMMAS
-    v1com = sns.violinplot(data=np.log10(sl_com_eta),ax=ax[0,1],color='tab:blue',width=.5,boxprops=dict(alpha=.6),showfliers = False);
-    v2com = sns.violinplot(data=np.log10(wk_com_eta),ax=ax[0,0],color='tab:blue',width=.5,boxprops=dict(alpha=.6),showfliers = False);
+    v1com = plot_type(data=np.log10(sl_com_eta),ax=ax[0,1],color='tab:blue',width=.5,boxprops=dict(alpha=.6),showfliers = fliers);
+    v2com = plot_type(data=np.log10(wk_com_eta),ax=ax[0,0],color='tab:blue',width=.5,boxprops=dict(alpha=.6),showfliers = fliers);
 
     #Empty plots; use for legends
-    dcom, = ax[0,0].plot([0,0],[0,0],color='tab:red',linewidth=5)
-    dcap, = ax[0,0].plot([0,0],[0,0],color='tab:blue',linewidth=5)
+    dcom, = ax[0,0].plot([0,0],[0,0],color='tab:red' ,linewidth=3)
+    dcap, = ax[0,0].plot([0,0],[0,0],color='tab:blue',linewidth=3)
     ax[0,0].legend([dcom,dcap],['Capacitor','COMMAS'],loc='upper center',fontsize=14)
 
     #Capacitor:
-    v1cap = sns.violinplot(data=np.log10(sl_cap_eta),ax=ax[0,1],color='red',width=.5,boxprops=dict(alpha=.6),showfliers = False);
-    v2cap = sns.violinplot(data=np.log10(wk_cap_eta),ax=ax[0,0],color='red',width=.5,boxprops=dict(alpha=.6),showfliers = False);
+    v1cap = plot_type(data=np.log10(sl_cap_eta),ax=ax[0,1],color='red',width=.5,boxprops=dict(alpha=.6),showfliers = fliers);
+    v2cap = plot_type(data=np.log10(wk_cap_eta),ax=ax[0,0],color='red',width=.5,boxprops=dict(alpha=.6),showfliers = fliers);
 
     alpha = 0.6
     #Set violin alpha:
@@ -287,8 +315,8 @@ def box_plots(sl_bins,wk_bins): #FIX
 
     #Annotate fraction of flashes per length bin
     for i,(n) in enumerate(percents_wk):
-        ax[0,0].annotate('{0:.2f}%'.format(n*100),xy=(bin_range[i]-.35,-7.),weight='bold',color='k',fontsize=12.5);
-        ax[0,1].annotate('{0:.2f}%'.format(percents_sl[i]*100),xy=(bin_range[i]-.35,-7.),weight='bold',color='k',fontsize=12.5);
+        ax[0,0].annotate('{0:.2f}%'.format(n*100),xy=(bin_range[i]-.35,-7.),weight='bold',color='k',fontsize=11.5);
+        ax[0,1].annotate('{0:.2f}%'.format(percents_sl[i]*100),xy=(bin_range[i]-.35,-7.),weight='bold',color='k',fontsize=11.5);
 
     ax[0,0].plot([-1,6],[0,0],'k-')
     ax[0,1].plot([-1,6],[0,0],'k-')
@@ -297,11 +325,11 @@ def box_plots(sl_bins,wk_bins): #FIX
     #Energy:
     #-------------------------------------------------------------------
     #COMMAS
-    e1com = sns.violinplot(data=np.log10(sl_len_com),ax=ax[1,1],color='tab:blue',width=.5,boxprops=dict(alpha=.6),showfliers = False);
-    e2com = sns.violinplot(data=np.log10(wk_len_com),ax=ax[1,0],color='tab:blue',width=.5,boxprops=dict(alpha=.6),showfliers = False);
+    e1com = plot_type(data=np.log10(sl_len_com),ax=ax[1,1],color='tab:blue',width=.5,boxprops=dict(alpha=.6),showfliers = fliers);
+    e2com = plot_type(data=np.log10(wk_len_com),ax=ax[1,0],color='tab:blue',width=.5,boxprops=dict(alpha=.6),showfliers = fliers);
     #Capacitor:
-    e1cap = sns.violinplot(data=np.log10(sl_len_cap),ax=ax[1,1],color='red',width=.5,boxprops=dict(alpha=.6),showfliers = False);
-    e2cap = sns.violinplot(data=np.log10(wk_len_cap),ax=ax[1,0],color='red',width=.5,boxprops=dict(alpha=.6),showfliers = False);
+    e1cap = plot_type(data=np.log10(sl_len_cap),ax=ax[1,1],color='red',width=.5,boxprops=dict(alpha=.6),showfliers = fliers);
+    e2cap = plot_type(data=np.log10(wk_len_cap),ax=ax[1,0],color='red',width=.5,boxprops=dict(alpha=.6),showfliers = fliers);
 
 
     #-5/3 line:
@@ -346,10 +374,10 @@ def box_plots(sl_bins,wk_bins): #FIX
             a.annotate(l,xy=(-5.5,.9),fontsize=26,color='red',weight='bold')
 
     plt.tight_layout()
-    plt.savefig('Figures/ETA_ENERGY_FLASH-LENGTHS.png',dpi=180,bbox_inches='tight')
+    plt.savefig('Figures/ETA_ENERGY_FLASH-LENGTHS.pdf',dpi=180,bbox_inches='tight')
 
 
-def eta_time_series(wk,sl,wk_cap,sl_cap,wk_bins,sl_bins): #FIX
+def eta_time_series(wk,sl,wk_eta,sl_eta,wk_cap,sl_cap,wk_bins,sl_bins): #FIX
     '''
     Reproduce eta ration time series -- sum(w_cap)/sum(w_commas) as a function of time.
     For consistency, these values are binned every minute as with the energy comparisons,
@@ -363,14 +391,14 @@ def eta_time_series(wk,sl,wk_cap,sl_cap,wk_bins,sl_bins): #FIX
     fig,ax = plt.subplots(1,1,figsize=(13,5))
     axb = ax.twiny()
 
-    wk_eta = np.nanmedian(wk_df.eta_c)
-    sl_eta = np.nanmedian(sl_df.eta_c)
+    wk_etaM = np.nanmedian(wk_eta)
+    sl_etaM = np.nanmedian(sl_eta)
 
     #Get Total Energy Fractions per minute.
-    wk_etot_cap, wk_e_histtot_cap = hist_min( wk_df['Time (s)'],(wk_cap*wk_eta)              ,wk_bins,'totals')
+    wk_etot_cap, wk_e_histtot_cap = hist_min( wk_df['Time (s)'],(wk_cap*wk_etaM)              ,wk_bins,'totals')
     wk_etot_com, wk_e_histtot_com = hist_min( wk_df['Time (s)'],(-wk_df[' Change in Energy']),wk_bins,'totals')
 
-    sl_etot_cap, sl_e_histtot_cap = hist_min( sl_df['Time (s)'],(sl_cap*sl_eta)              ,sl_bins,'totals')
+    sl_etot_cap, sl_e_histtot_cap = hist_min( sl_df['Time (s)'],(sl_cap*sl_etaM)              ,sl_bins,'totals')
     sl_etot_com, sl_e_histtot_com = hist_min( sl_df['Time (s)'],(-sl_df[' Change in Energy']),sl_bins,'totals')
 
     #Plot total energy fraction time series
@@ -389,9 +417,36 @@ def eta_time_series(wk,sl,wk_cap,sl_cap,wk_bins,sl_bins): #FIX
     ax.set_ylabel(r'$\Sigma \eta_c W_c$ / $\Sigma W_m$',fontsize=15)
     ax. tick_params(labelsize=14)
     axb.tick_params(labelsize=14)
-
     #Annotate the total energy fraction(s) for entire durations
-    ax.annotate(r'$\Sigma \eta_c W_c$ / $\Sigma W_m$ = 111.5 %',xy=(3400,55), color='tab:blue',fontsize=16,weight='bold')
-    ax.annotate(r'$\Sigma \eta_c W_c$ / $\Sigma W_m$ = 115.0 %',xy=(3400,21), color='tab:red', fontsize=16,weight='bold')
+    wk_percent = (wk_cap*wk_etaM).sum()/-wk_df[' Change in Energy'].sum()
+    sl_percent = (sl_cap*sl_etaM).sum()/-sl_df[' Change in Energy'].sum()
+
+    ax.annotate(r'$\Sigma \eta_c W_c$ / $\Sigma W_m$ = {0:.2f} %'.format(wk_percent*100),xy=(3400,55), color='tab:blue',fontsize=16,weight='bold')
+    ax.annotate(r'$\Sigma \eta_c W_c$ / $\Sigma W_m$ = {0:.2f} %'.format(sl_percent*100),xy=(3400,21), color='tab:red', fontsize=16,weight='bold')
     ax.grid(axis='y',alpha=0.3)
-    plt.savefig('Figures/WC_WM_RATIO.png',dpi=150,bbox_inches='tight')
+    plt.savefig('Figures/WC_WM_RATIO.pdf',dpi=150,bbox_inches='tight')
+
+
+def cov_time_series(wk_cap,wk_comm,wk_time,wk_time_bins,wk_etac,sl_cap,sl_comm,sl_time,sl_time_bins,sl_etac):
+    wk_cov = temporal_covariance(wk_cap,wk_comm,wk_time,wk_time_bins,wk_etac)
+    sl_cov = temporal_covariance(sl_cap,sl_comm,sl_time,sl_time_bins,sl_etac)
+
+    fig,ax = plt.subplots(1,1,figsize=(12,5))
+    axb = ax.twiny()
+    wk, = ax.plot(wk_time_bins,wk_cov,linewidth=3)
+    sl, = axb.plot(sl_time_bins,sl_cov,'C3',linewidth=3)
+
+    ax.legend([wk,sl],['WK82','SL16'],fontsize=14)
+
+
+
+    ax.tick_params(labelsize=14)
+    axb.tick_params(labelsize=14)
+    ax.grid(axis='y',alpha=0.3)
+    ax.set_ylabel(r'cov($W_{d}$,$\ \Delta W_m$)',fontsize=15)
+
+    ax.plot([800,6500],[0,0],'k')
+    ax.set_xlim(wk_time_bins.min(),wk_time_bins.max())
+    ax.set_xlabel('WK82 Simulation Time [s]',fontsize=15,color='C0')
+    axb.set_xlabel('SL16 Simulation Time [s]',fontsize=15,color='C3')
+    plt.savefig('Figures/CAP_COMM_COV.pdf',dpi=150,bbox_inches='tight')
