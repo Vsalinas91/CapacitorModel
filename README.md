@@ -38,8 +38,12 @@ Running the analysis is done by: python CapacitorModelAnalyses.py. There are thr
                 -) Time series interval adjustment - adjusting bin_range will allow for various views of the data at different total and    average time scales. Currently, the default is 60. for 60 second intervals.
                 -) uniform_eta - Boolean arguement. If True, user must specify a value for eta by which capacitor energy estimates are adjusted by. Else, if False, the median values of eta_c are used.
                 -) eta_u - Uniform eta to be specified by the user if a different value is wished to be used to scale and adjust the capacitor energy estimates. 
-    
-    
+
+Purpose:
+-----
+The model depicts a per-flash capacitor rather than one for an entire storm, the following illustration shows how our intended use differs from what past work has used it for (Boccippio, 2002; Dahl et al., 2011) in comparison to how charge is structured in real storms (Stolzenburg et al., 1998):
+
+![illustration](Figures/capacitor_concept.jpg)
     
 Any questions or concerns about issues or errors in these files may be directed to the author at: vicente.salinas@ttu.edu
 
