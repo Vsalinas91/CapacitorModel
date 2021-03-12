@@ -189,41 +189,50 @@ def energy_compare(t_centers,commas_totals,commas_means,cap_totals,cap_means,eta
         ax4 = ax[1,0]
         ax5 = ax[1,1]
 
+    if adjust == False:
+        cap_label_total = r'$\rm Total \ W_c$'
+        cap_label_mean  = r'$\rm Mean \ W_c$'
+    else:
+        cap_label_total = r'$\rm Total \ W_d$'
+        cap_label_mean  = r'$\rm Mean \ W_d$'
+
+    com_label_total  = r'$\rm Total \ \Delta W_m$'
+    com_label_mean   = r'$\rm Mean \ \Delta W_m$'
 
     # #Average Time Series: WK TOTALS
     # #------------------------------------------------------------------------------------------
-    wkC_totals, = ax[0,0].plot(wk_t_centers,wk_cap_totals*1e-9   ,'C3'  ,label='Capacitor Energy')
-    wkD_totals, = ax2.plot(    wk_t_centers,wk_commas_totals*1e-9,'C0--',label='COMMAS Energy')
+    wkC_totals, = ax[0,0].plot(wk_t_centers,wk_cap_totals*1e-9   ,'C3'  ,label=cap_label_total)
+    wkD_totals, = ax2.plot(    wk_t_centers,wk_commas_totals*1e-9,'C0--',label=com_label_total)
     #End --------------------------------------------------------------------------------------
 
     #Average Time Series: WK MEANS
     #------------------------------------------------------------------------------------------
-    wkC_means,  = ax[1,0].plot(wk_t_centers,wk_cap_means*1e-9    ,'C3'  ,label='Capacitor Energy')
-    wkD_means,  = ax4.plot(    wk_t_centers,wk_commas_means*1e-9,'C0--',label='COMMAS Energy')
+    wkC_means,  = ax[1,0].plot(wk_t_centers,wk_cap_means*1e-9    ,'C3'  ,label=cap_label_mean)
+    wkD_means,  = ax4.plot(    wk_t_centers,wk_commas_means*1e-9,'C0--',label=com_label_mean)
     # #End --------------------------------------------------------------------------------------
 
     #Average Time Series: KTAL Totals
     #------------------------------------------------------------------------------------------
-    slC_totals, = ax[0,1].plot(sl_t_centers,sl_cap_totals*1e-9   ,'C3'  ,label='Capacitor Energy')
-    slD_totals, = ax3.plot(    sl_t_centers,sl_commas_totals*1e-9,'C0--',label='COMMAS Energy')
+    slC_totals, = ax[0,1].plot(sl_t_centers,sl_cap_totals*1e-9   ,'C3'  ,label=cap_label_total)
+    slD_totals, = ax3.plot(    sl_t_centers,sl_commas_totals*1e-9,'C0--',label=com_label_total)
     #End --------------------------------------------------------------------------------------
 
     #Average Time Series: KTAL MEANS
     #------------------------------------------------------------------------------------------
-    slC_means,  = ax[1,1].plot(sl_t_centers,sl_cap_means*1e-9   ,'C3'  ,label='Capacitor Energy')
-    slD_means,  = ax5.plot(    sl_t_centers,sl_commas_means*1e-9,'C0--',label='COMMAS Energy')
+    slC_means,  = ax[1,1].plot(sl_t_centers,sl_cap_means*1e-9   ,'C3'  ,label=cap_label_mean)
+    slD_means,  = ax5.plot(    sl_t_centers,sl_commas_means*1e-9,'C0--',label=com_label_mean)
     #End --------------------------------------------------------------------------------------
 
 
     if adjust == False:
-        ylabel = 'Electrostatic Energy Change (GJ)'
+        ylabel = r'$\rm W_c$ (GJ)'
         for i, axs in enumerate((ax2,ax3,ax4,ax5)):
-            axs.set_ylabel('COMMAS Energy (GJ)',fontsize=15)
+            axs.set_ylabel(r'$\rm W_m$ (GJ)',fontsize=15)
             axs.tick_params(axis='both', which='major', labelsize=12)
     else:
-        ylabel = 'Capacitor Energy (GJ)'
-        ax[0,0].set_title(r'$\tilde{{\eta}}_c$ = {0:.3f}'.format(eta[0]),fontsize=17)
-        ax[0,1].set_title(r'$\tilde{{\eta}}_c$ = {0:.3f}'.format(eta[1]),fontsize=17)
+        ylabel = r'$\rm W$ (GJ)'
+        ax[0,0].set_title(r'$\tilde{{\mu}}_c$ = {0:.3f}'.format(eta[0]),fontsize=17)
+        ax[0,1].set_title(r'$\tilde{{\mu}}_c$ = {0:.3f}'.format(eta[1]),fontsize=17)
 
 
     #Axis Labels:
@@ -236,13 +245,13 @@ def energy_compare(t_centers,commas_totals,commas_means,cap_totals,cap_means,eta
 
     #TOP and BOTTOM LEGENDS:
     ax[0,0].legend([wkC_totals,wkD_totals],
-                   ['WK82 Total Capacitor Energy','WK82 Total COMMAS Energy'],fontsize=14,loc='upper left')
+                   ['WK82'+' '+cap_label_total,'WK82'+' '+com_label_total],fontsize=14,loc='upper left')
     ax[0,1].legend([slC_totals,slD_totals],
-                   ['SL16 Total Capacitor Energy','SL16 Total COMMAS Energy'],fontsize=14,loc='upper left')
+                   ['SL16'+' '+cap_label_total,'SL16'+' '+com_label_total],fontsize=14,loc='upper left')
     ax[1,0].legend([wkC_means,wkD_means],
-                   ['WK82 Mean Capacitor Energy','WK82 Mean COMMAS Energy'],fontsize=14)
+                   ['WK82'+' '+cap_label_mean,'WK82'+' '+com_label_mean],fontsize=14)
     ax[1,1].legend([slC_means,wkD_means],
-                   ['SL16 Mean Capacitor Energy','SL16 Mean COMMAS Energy'],fontsize=14)
+                   ['SL16'+' '+cap_label_mean,'SL16'+' '+com_label_mean],fontsize=14)
 
     #Annotate:
     #-----------------------
@@ -250,11 +259,11 @@ def energy_compare(t_centers,commas_totals,commas_means,cap_totals,cap_means,eta
         if i==0:
             a.annotate(l,xy=(1500,450),fontsize=26,color='red',weight='bold')
         elif i==2:
-            a.annotate(l,xy=(1500,2.4),fontsize=26,color='red',weight='bold')
+            a.annotate(l,xy=(1500,2.45),fontsize=26,color='red',weight='bold')
         elif i==1:
-            a.annotate(l,xy=(1800,170),fontsize=26,color='red',weight='bold')
+            a.annotate(l,xy=(1800,100),fontsize=26,color='red',weight='bold')
         elif i==3:
-            a.annotate(l,xy=(1800,3.5),fontsize=26,color='red',weight='bold')
+            a.annotate(l,xy=(1800,5),fontsize=26,color='red',weight='bold')
 
 
     plt.tight_layout()
@@ -294,17 +303,17 @@ def box_plots(sl_bins,wk_bins): #FIX
     #ETA:
     #-------------------------------------------------------------------
     #COMMAS
-    v1com = plot_type(data=np.log10(sl_com_eta),ax=ax[0,1],color='tab:blue',width=.5,boxprops=dict(alpha=.6),showfliers = fliers);
-    v2com = plot_type(data=np.log10(wk_com_eta),ax=ax[0,0],color='tab:blue',width=.5,boxprops=dict(alpha=.6),showfliers = fliers);
+    v1com = plot_type(data=np.log10(sl_com_eta),ax=ax[0,1],color='tab:blue',width=.5,boxprops=dict(alpha=.5),showfliers = fliers);
+    v2com = plot_type(data=np.log10(wk_com_eta),ax=ax[0,0],color='tab:blue',width=.5,boxprops=dict(alpha=.5),showfliers = fliers);
 
     #Empty plots; use for legends
     dcom, = ax[0,0].plot([0,0],[0,0],color='tab:red' ,linewidth=3)
     dcap, = ax[0,0].plot([0,0],[0,0],color='tab:blue',linewidth=3)
-    ax[0,0].legend([dcom,dcap],['Capacitor','COMMAS'],loc='upper center',fontsize=14)
+    ax[0,0].legend([dcom,dcap],[r'$\rm W_c$, $\rm \mu_c$',r'$\rm \Delta W_m$, $\rm \eta_m$'],loc='upper center',fontsize=14)
 
     #Capacitor:
-    v1cap = plot_type(data=np.log10(sl_cap_eta),ax=ax[0,1],color='red',width=.5,boxprops=dict(alpha=.6),showfliers = fliers);
-    v2cap = plot_type(data=np.log10(wk_cap_eta),ax=ax[0,0],color='red',width=.5,boxprops=dict(alpha=.6),showfliers = fliers);
+    v1cap = plot_type(data=np.log10(sl_cap_eta),ax=ax[0,1],color='red',width=.5,boxprops=dict(alpha=.7),showfliers = fliers);
+    v2cap = plot_type(data=np.log10(wk_cap_eta),ax=ax[0,0],color='red',width=.5,boxprops=dict(alpha=.7),showfliers = fliers);
 
     alpha = 0.6
     #Set violin alpha:
@@ -333,8 +342,8 @@ def box_plots(sl_bins,wk_bins): #FIX
 
 
     #-5/3 line:
-    ax[1,0].plot(np.linspace(1,5,6),np.linspace(6,11,6),'k:')
-    ax[1,1].plot(np.linspace(1,5,6),np.linspace(6,11,6),'k:')
+    ax[1,0].plot(np.linspace(0,6,2),np.linspace(6,11,2),'k:')
+    ax[1,1].plot(np.linspace(0,6,2),np.linspace(6,11,2),'k:')
 
 
     #Set violin alpha for energy
@@ -348,7 +357,7 @@ def box_plots(sl_bins,wk_bins): #FIX
     ax[1,0].set_xlim(-1,6)
     ax[1,1].set_xlim(-1,6)
 
-    [ax[0,j].set_ylabel(r'$\rm log_{10}(\eta)$',fontsize=15)          for j in range(2)]
+    [ax[0,j].set_ylabel(r'$\rm log_{10}(\eta_m, \mu_c)$',fontsize=15)          for j in range(2)]
     [ax[1,j].set_ylabel(r'$\rm log_{10}(W [J])$',fontsize=15)         for j in range(2)]
     [ax[i,j].set_xlabel(r'$\rm \sqrt{A} [km]$',fontsize=15)           for i in range(2) for j in range(2)]
     [ax[i,j].tick_params(labelsize=13) for i in range(2)              for j in range(2)]
@@ -379,7 +388,7 @@ def box_plots(sl_bins,wk_bins): #FIX
 
 def eta_time_series(wk,sl,wk_eta,sl_eta,wk_cap,sl_cap,wk_bins,sl_bins): #FIX
     '''
-    Reproduce eta ration time series -- sum(w_cap)/sum(w_commas) as a function of time.
+    Reproduce eta ratio time series -- sum(w_cap)/sum(w_commas) as a function of time.
     For consistency, these values are binned every minute as with the energy comparisons,
     and summary figures.
 
@@ -414,15 +423,15 @@ def eta_time_series(wk,sl,wk_eta,sl_eta,wk_cap,sl_cap,wk_bins,sl_bins): #FIX
 
     ax. set_xlabel('WK82 Simulation Time [s]',fontsize=15,color='C0')
     axb.set_xlabel('SL16 Simulation Time [s]',fontsize=15,color='C3')
-    ax.set_ylabel(r'$\Sigma \eta_c W_c$ / $\Sigma W_m$',fontsize=15)
+    ax.set_ylabel(r'$\Sigma W_d$ / $\Sigma \Delta W_m$',fontsize=15)
     ax. tick_params(labelsize=14)
     axb.tick_params(labelsize=14)
     #Annotate the total energy fraction(s) for entire durations
     wk_percent = (wk_cap*wk_etaM).sum()/-wk_df[' Change in Energy'].sum()
     sl_percent = (sl_cap*sl_etaM).sum()/-sl_df[' Change in Energy'].sum()
 
-    ax.annotate(r'$\Sigma \eta_c W_c$ / $\Sigma W_m$ = {0:.2f} %'.format(wk_percent*100),xy=(3400,55), color='tab:blue',fontsize=16,weight='bold')
-    ax.annotate(r'$\Sigma \eta_c W_c$ / $\Sigma W_m$ = {0:.2f} %'.format(sl_percent*100),xy=(3400,21), color='tab:red', fontsize=16,weight='bold')
+    ax.annotate(r'$\Sigma W_d$ / $\Sigma \Delta W_m$ = {0:.2f} %'.format(wk_percent*100),xy=(3400,55), color='tab:blue',fontsize=16,weight='bold')
+    ax.annotate(r'$\Sigma W_d$ / $\Sigma \Delta W_m$ = {0:.2f} %'.format(sl_percent*100),xy=(3400,21), color='tab:red', fontsize=16,weight='bold')
     ax.grid(axis='y',alpha=0.3)
     plt.savefig('Figures/WC_WM_RATIO.pdf',dpi=150,bbox_inches='tight')
 

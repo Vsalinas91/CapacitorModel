@@ -97,10 +97,10 @@ def case_time_series(df,case,bins,sim_time):
     axwindd.plot((sim_time),(df.w_vol),'k--',linewidth=2,  label='Updraft Volume')
 
 
-    ax[0,0].legend([p1 ,p2 ,p3] ,['Total Flash Area','Flash Rate'        ,'Updraft Volume'],fontsize=12)
-    ax[0,1].legend([p1 ,p2 ,p3] ,['Mean Flash Area' ,'Flash Rate'        ,'Updraft Volume'],fontsize=12)
-    ax[1,0].legend([p1b,p2b,p3b],['Total Flash Area','Total Flash Energy','Updraft Volume'],fontsize=12)
-    ax[1,1].legend([p1b,p2b,p3b],['Mean Flash Area' ,'Mean Flash Energy' ,'Updraft Volume'],fontsize=12)
+    ax[0,0].legend([p1 ,p2 ,p3] ,['Total A','Flash Rate'        ,'Updraft Volume'],fontsize=12)
+    ax[0,1].legend([p1 ,p2 ,p3] ,['Mean A' ,'Flash Rate'        ,'Updraft Volume'],fontsize=12)
+    ax[1,0].legend([p1b,p2b,p3b],['Total A',r'Total $\rm \Delta W_m$','Updraft Volume'],fontsize=12)
+    ax[1,1].legend([p1b,p2b,p3b],['Mean A' ,r'Mean $\rm \Delta W_m$' ,'Updraft Volume'],fontsize=12)
 
 
     #Fix colors of axes
@@ -123,10 +123,10 @@ def case_time_series(df,case,bins,sim_time):
 
     #Set Labels:
     #----------------------------------------------------
-    ax[0,0].set_ylabel(r'Total Flash Area $(km^{2})$',fontsize=15)
-    ax[1,0].set_ylabel(r'Total Flash Area $(km^{2})$',fontsize=15)
-    ax[0,1].set_ylabel(r'Mean Flash Area $(km^{2})$' ,fontsize=15)
-    ax[1,1].set_ylabel(r'Mean Flash Area $(km^{2})$' ,fontsize=15)
+    ax[0,0].set_ylabel(r'A $(km^{2})$',fontsize=15)
+    ax[1,0].set_ylabel(r'A $(km^{2})$',fontsize=15)
+    ax[0,1].set_ylabel(r'A $(km^{2})$' ,fontsize=15)
+    ax[1,1].set_ylabel(r'A $(km^{2})$' ,fontsize=15)
 
     ax[0,0].set_xlabel(r'Model Time (s)',fontsize=15)
     ax[1,0].set_xlabel(r'Model Time (s)',fontsize=15)
@@ -137,8 +137,8 @@ def case_time_series(df,case,bins,sim_time):
 
     ax_rate1.set_ylabel(r'Flash Rate $(min^{-1})$'  ,fontsize=15)
     ax_rate2.set_ylabel(r'Flash Rate $(min^{-1})$'  ,fontsize=15)
-    ax_eng1.set_ylabel( r'Total Flash Energy $(GJ)$',fontsize=15)
-    ax_eng2.set_ylabel( r'Mean Flash Energy $(GJ)$' ,fontsize=15)
+    ax_eng1.set_ylabel( r'$\rm \Delta W_m$ $(GJ)$',fontsize=15)
+    ax_eng2.set_ylabel( r'$\rm \Delta W_m$ $(GJ)$' ,fontsize=15)
 
 
     axwind.set_ylabel( r'Updraft Volume ($km^{3}$)',fontsize=15)
@@ -158,10 +158,10 @@ def case_time_series(df,case,bins,sim_time):
     ax_eng1.tick_params( labelsize=14,colors=p2b.get_color())
     ax_eng2.tick_params( labelsize=14,colors=p2b.get_color())
 
-    ax[0,0].tick_params(which='y',colors=p1.get_color())
-    ax[0,1].tick_params(which='y',colors=p1.get_color())
-    ax[1,0].tick_params(which='y',colors=p1b.get_color())
-    ax[1,1].tick_params(which='y',colors=p1b.get_color())
+    ax[0,0].tick_params(axis='y',colors=p1.get_color())
+    ax[0,1].tick_params(axis='y',colors=p1.get_color())
+    ax[1,0].tick_params(axis='y',colors=p1b.get_color())
+    ax[1,1].tick_params(axis='y',colors=p1b.get_color())
 
 
     [ax[i,j].set_xlim(t_edges.min(),t_edges.max()) for i in range(2) for j in range(2)]
@@ -188,13 +188,13 @@ def case_time_series(df,case,bins,sim_time):
     else:
         for i,(a,l) in enumerate(zip(ax.flatten(),['A)','B)','C)','D)'])):
             if i == 0:
-                a.annotate(l,xy=(2000,44000),fontsize=26,color='red',weight='bold')
+                a.annotate(l,xy=(2000,25000),fontsize=26,color='red',weight='bold')
             elif i == 1:
-                a.annotate(l,xy=(8200,90),fontsize=26,color='red',weight='bold')
+                a.annotate(l,xy=(1900,650),fontsize=26,color='red',weight='bold')
             elif i == 2:
-                a.annotate(l,xy=(2000,44000),fontsize=26,color='red',weight='bold')
+                a.annotate(l,xy=(2000,25000),fontsize=26,color='red',weight='bold')
             elif i == 3:
-                a.annotate(l,xy=(8200,90),fontsize=26,color='red',weight='bold')
+                a.annotate(l,xy=(1900,650),fontsize=26,color='red',weight='bold')
 
     plt.tight_layout()
     plt.savefig(f'Figures/{case}_SUMMARY.pdf',dpi=120,bbox_inches='tight')

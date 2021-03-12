@@ -29,7 +29,7 @@ def capacitor_discharge(rho,d,a,sig,charge_type):
        -) e   = permitivitty of cloudy air
     '''
     if charge_type == 'surface':
-        num = sig**2. * d * a
+        num = sig**2. * d * (a)
     elif charge_type == 'space':
         num = rho**2. * d**3. * a
     den = 2. * e
@@ -69,7 +69,7 @@ def compute_energy(cap_dist,cap_area,flash_breakdown,charge_type):
     Critical space charge density is computed prior to energy calculation.
     (Eq. 6 and 7 in Text)
     '''
-    sig_crit = (e*flash_breakdown)/2 #between plates
+    sig_crit = (e*flash_breakdown) #between plates
 #     sig_crit = (2*e*flash_breakdown) # at d/2 between plates.
     rho_crit     = (sig_crit)/cap_dist
     if charge_type == 'surface':
@@ -77,4 +77,7 @@ def compute_energy(cap_dist,cap_area,flash_breakdown,charge_type):
     else:
         flash_energy = capacitor_discharge(rho_crit,cap_dist,cap_area,sig_crit,'space')
     #Multiply by two to account for mirror charges
-    return(flash_energy * 4)
+#     return(flash_energy*2)
+    #No mirror charge if we assume capacitor is shielded, and z_init is too far from surface to have or need to 
+    #account for the surface conducting plane.
+    return(flash_energy) 

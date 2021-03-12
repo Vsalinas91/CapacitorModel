@@ -66,6 +66,10 @@ def get_flash_data(case,charge_type):
     read_flash   = read_flash.dropna()
     read_flash   = read_flash.drop(index=ignore) #Drop all flashes that correspond to -/+CG or IC flashes with a CG component
 
+    if case == 'SL':
+        mask = np.where(read_flash.yi*125 < 50e3)
+        read_flash = read_flash.iloc[mask]
+
     model_energy = -read_flash[' Change in Energy'] #COMMAS Flash energy change (- sign as values are energy removed)
     init_time    = read_flash['Time (s)']         #Time of initiation
 
