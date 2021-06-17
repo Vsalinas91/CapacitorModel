@@ -459,3 +459,49 @@ def cov_time_series(wk_cap,wk_comm,wk_time,wk_time_bins,wk_etac,sl_cap,sl_comm,s
     ax.set_xlabel('WK82 Simulation Time [s]',fontsize=15,color='C0')
     axb.set_xlabel('SL16 Simulation Time [s]',fontsize=15,color='C3')
     plt.savefig('Figures/CAP_COMM_COV.pdf',dpi=150,bbox_inches='tight')
+
+def energy_hists(wk_dat,sl_dat):
+    '''
+    Plot energy histograms in 0.5GJ bins to visualize the total flash
+    counts associated with more or less discharge energy.
+
+    Plots show COMMAS (Delta W_m) and adjusted discharge energy solutions
+    for comparison.
+
+    Arguments are the data dictionary objects generated for the cell-specific
+    flash populations (updated 06/17/21). Example: wk_dat_right, wk_dat_full, wk_dat_left
+    '''
+    weng = wk_dat['com_eng']
+    seng = sl_dat['com_eng']
+
+    weng2 = wk_dat['cap_adj']
+    seng2 = sl_dat['cap_adj']
+
+    whist = np.histogram(weng,bins=np.arange(weng.min(),weng.max(),.5e9))
+    shist = np.histogram(seng,bins=np.arange(seng.min(),seng.max(),.5e9))
+
+    whist2 = np.histogram(weng2,bins=np.arange(weng2.min(),weng2.max(),.5e9))
+    shist2 = np.histogram(seng2,bins=np.arange(seng2.min(),seng2.max(),.5e9))
+
+    fig,ax =plt.subplots(1,2,figsize=(12,5))
+    # axb=ax[0].twinx()
+    # axc=ax[1].twinx()
+
+    wkcm, = ax[0].step(whist[1][:-1],whist[0],color='k')
+    slcm, = ax[1].step(shist[1][:-1],shist[0],color='k')
+
+    wkca, = ax[0].step(whist2[1][:-1],whist2[0],color='r')
+    slca, = ax[1].step(shist2[1][:-1],shist2[0],color='r')
+
+    ax[0].legend([wkcm,wkca],[r'WK82-$\rm \Delta W_m$',r'WK82-$\rm W_d$'],fontsize=15)
+    ax[1].legend([slcm,slca],[r'SL16-$\rm \Delta W_m$',r'SL16-$\rm W_d$'],fontsize=15)
+
+    [axs.set_xlabel(r'$\rm \Delta W_m\ [J]$',fontsize=17) for axs in ax.flatten()]
+    [axs.set_ylabel(r'$\rm Counts$',fontsize=17) for axs in ax.flatten()]
+    [axs.tick_params(labelsize=15) for axs in ax.flatten()]
+    [axs.grid(alpha=0.2) for axs in ax.flatten()]
+    ax[0].text(1e10,1000,'Bins=0.5 GJ',fontsize=15)
+    ax[1].text(5e9, 700,'Bins=0.5 GJ',fontsize=15)
+
+    plt.tight_layout()
+    plt.savefig('Figures/ENG_HISTOS.pdf',dpi=150,bbox_inches='tight')

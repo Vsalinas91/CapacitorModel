@@ -23,8 +23,9 @@ import numpy as np
 import pandas as pd
 import scipy.stats as st
 import Capacitor as cap
-from EnergyPlotting import hist_min,box_bins,energy_time_series,energy_compare,box_plots,eta_time_series,cov_time_series
+from EnergyPlotting import hist_min,box_bins,energy_time_series,energy_compare,box_plots,eta_time_series,cov_time_series,energy_hists
 from CasePlotting import case_time_series, case_energy_area
+from Capacitor import e_br, compute_energy
 
 import matplotlib
 matplotlib.use('agg')
@@ -41,6 +42,76 @@ case_sl     = 'SL'
 bin_range   = 60.   #for one minute bins - can change for other desired bin spacings
 uniform_eta = False # If uniform_eta is True, specify the eta_c values to be used to adjust energy values.
 eta_u       = 0.008 # uniform eta value (u = uniform) - median range between 0.008-0.01
+
+
+####################################################
+# Cell Splitting Routines to extract cell-specific #
+# flash populations.                               #
+# note: for partioned model                        #
+####################################################
+def flash_filter(case):
+    cg_flags  = pd.read_csv(f'InitData/{case}-CG-Flashes.csv')
+    cg_ignore = cg_flags.cg_flag.values
+    return(cg_ignore)
+
+def data(case):
+    cg_ignore = flash_filter(case)
+    data = f'InitData/{case}_INIT_DATA.csv'
+    data = pd.read_csv(data)
+    data = data.drop(index=cg_ignore)
+
+    if case == 'WK':
+        cname = 'WK82'
+    else:
+        cname = 'SL16'
+    datq = f'InitData/{cname}_INITS_Analysis_FINAL-NEW.csv'
+    datq = pd.read_csv(datq)
+    datq = datq.drop(index=cg_ignore)
+    return(data,datq)
+
+def cell_subset(case,data,datq,cell):
+    if case == 'WK':
+        split_axis = 29e3
+    elif case == 'SL':
+        split_axis = 50e3
+    else:
+        raise ValueError('Invalid Case Chosen, options include WK and SL.')
+
+    y_dim     = data.yi*125.
+    cell_dict = {'right':(y_dim<split_axis),'left':(y_dim>split_axis),'full':(y_dim>0)}
+    if cell in cell_dict.keys():
+        cell_mask = cell_dict[cell]
+
+    data = data.iloc[np.array(cell_mask)]
+    datq = datq.iloc[np.array(cell_mask)]
+    return(data,datq,cell_mask)
+
+
+def get_vars(subset,lo,ln):
+    itime           = subset['Time (s)']
+    einit           = e_br((subset.zi*125.)*1e-3)*1e3
+    dat_area        = subset.area
+    dat_sep         = subset.separation
+    cap_eng = compute_energy(dat_sep,dat_area,einit,'surface')
+    com_eng         = np.abs(subset[' Change in Energy'])
+    com_eta         = com_eng/cap_eng
+    eta_m           = com_eng/subset[' Total Electrical Energy']
+    cap_adjust      = cap_eng.copy() * np.nanmedian(com_eta)
+    var_dict        = {'einit':einit,'area':dat_area,'sep':dat_sep,
+                       'cap':cap_eng,'com_eng': com_eng,'etac':com_eta,
+                       'etam':eta_m,'cap_adj':cap_adjust,'itime':itime,
+                       'lo':lo,'ln':ln}
+
+    return(var_dict)
+
+def get_lengths(subset):
+    meanL = np.mean(subset['area']**0.5)
+    std   = np.std( subset['area']**0.5) * .45#.45
+    l_len = meanL-std
+    r_len = meanL+std
+    lo = np.log10(l_len)
+    ln = np.log10(r_len)
+    return(l_len,r_len,lo,ln)
 
 ######################################################
 #Read Data: And set some global variables to be used #
@@ -112,9 +183,47 @@ def data_tuples(wk,sl):
 ####################################
 
 if __name__ == '__main__':
-
+    #Data for Main Plots:
     wk_data = get_flash_data(case_wk,'surface') #charge_type == 'surface' implies surface charge density calculation for W_c; else use space charge density.
     sl_data = get_flash_data(case_sl,'surface') #charge_type == 'surface' implies surface charge density calculation for W_c; else use space charge density.
+
+    #Temporary Work around, but open data to generate dictionary objects for full storm cells:------
+    #Get variables for plotting cell specific flashes (i.e., left, right, or full storm):
+    case_1 = 'WK'
+    case_2 = 'SL'
+
+    wk,wkq = data(case_1) #wk, and wkq are different dataframes; wk includes locations only, wkq contains .output data.
+    sl,slq = data(case_2)
+
+    #Get data subsets for cell specific flash populations
+    wk_full,wk_fullq,wk_full_mask  = cell_subset(case_1,wk,wkq,'full')
+    sl_full,sl_fullq,sl_full_mask  = cell_subset(case_2,sl,slq,'full')
+
+    wk_left,wk_leftq,wk_left_mask  = cell_subset(case_1,wk,wkq,'left')
+    sl_left,sl_leftq,sl_left_mask  = cell_subset(case_2,sl,slq,'left')
+
+    wk_right,wk_rightq,wk_right_mask = cell_subset(case_1,wk,wkq,'right')
+    sl_right,sl_rightq,sl_right_mask = cell_subset(case_2,sl,slq,'right')
+
+    #Get integral and outer-length range lengths [Not used for capacitor paper]
+    ll_wk_full,lr_wk_full,lo_wk_full,ln_wk_full = get_lengths(wk_full)
+    ll_sl_full,lr_sl_full,lo_sl_full,ln_sl_full = get_lengths(sl_full)
+
+    ll_wk_left,lr_wk_left,lo_wk_left,ln_wk_left = get_lengths(wk_left)
+    ll_sl_left,lr_sl_left,lo_sl_left,ln_sl_left = get_lengths(sl_left)
+
+    ll_wk_right,lr_wk_right,lo_wk_right,ln_wk_right = get_lengths(wk_right)
+    ll_sl_right,lr_sl_right,lo_sl_right,ln_sl_right = get_lengths(sl_right)
+
+    #Get dictionary objects for plotting histograms
+    wk_dat_full  = get_vars(wk_full ,lo_wk_full ,ln_wk_full)
+    wk_dat_right = get_vars(wk_right,lo_wk_right,ln_wk_right)
+    wk_dat_left  = get_vars(wk_left ,lo_wk_left ,ln_wk_left)
+
+    sl_dat_full  = get_vars(sl_full ,lo_sl_full ,ln_sl_full)
+    sl_dat_right = get_vars(sl_right,lo_sl_right,ln_sl_right)
+    sl_dat_left  = get_vars(sl_left ,lo_sl_left ,ln_sl_left)
+    #-------------------------------------------------------------------------------------------------
 
     #get data subsets, and return individual dataframes
     (wk_df, wk_energy,wk_time,wk_init_alt,
@@ -239,3 +348,8 @@ if __name__ == '__main__':
     #Energy Covariance   #
     ######################
     cov_time_series(wk_cap,wk_energy,wk_time,wk_bins,wk_cap_etaM,sl_cap,sl_energy,sl_time,sl_bins,sl_cap_etaM)
+
+    ######################
+    #Energy Histograms   #
+    ######################
+    energy_hists(wk_dat_full,sl_dat_right)
