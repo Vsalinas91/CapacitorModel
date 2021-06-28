@@ -310,11 +310,11 @@ def box_plots(sl_bins,wk_bins): #FIX
     dcom, = ax[0,0].plot([0,0],[0,0],color='tab:red' ,linewidth=3)
     dcap, = ax[0,0].plot([0,0],[0,0],color='tab:blue',linewidth=3)
     # ax[0,0].legend([dcom,dcap],[r'$\rm W_c$, $\rm \mu_c$',r'$\rm \Delta W_m$, $\rm \eta_m$'],loc='upper center',fontsize=14)
-    ax[0,0].legend([dcom,dcap],[r'$\rm W_c$',r'$\rm \Delta W_m$'],loc='upper center',fontsize=14)
-    ax[0,1].legend([dcom,dcap],[r'$\rm W_c$',r'$\rm \Delta W_m$'],loc='upper center',fontsize=14)
-    ax[1,0].legend([dcom,dcap],[r'$\rm \mu_c$',r'$\rm \eta_m$'],loc='upper center',fontsize=14)
-    ax[1,1].legend([dcom,dcap],[r'$\rm \mu_c$',r'$\rm \eta_m$'],loc='upper center',fontsize=14)
-    
+    ax[1,0].legend([dcom,dcap],[r'$\rm W_c$',r'$\rm \Delta W_m$'],loc='upper center',fontsize=14)
+    ax[1,1].legend([dcom,dcap],[r'$\rm W_c$',r'$\rm \Delta W_m$'],loc='upper center',fontsize=14)
+    ax[0,0].legend([dcom,dcap],[r'$\rm \mu_c$',r'$\rm \eta_m$'],loc='upper center',fontsize=14)
+    ax[0,1].legend([dcom,dcap],[r'$\rm \mu_c$',r'$\rm \eta_m$'],loc='upper center',fontsize=14)
+
     #Capacitor:
     v1cap = plot_type(data=np.log10(sl_cap_eta),ax=ax[0,1],color='red',width=.5,boxprops=dict(alpha=.7),showfliers = fliers);
     v2cap = plot_type(data=np.log10(wk_cap_eta),ax=ax[0,0],color='red',width=.5,boxprops=dict(alpha=.7),showfliers = fliers);
